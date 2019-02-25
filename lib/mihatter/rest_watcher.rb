@@ -17,7 +17,7 @@ module Mihatter
         loop do
           search.each do |tweet|
             yield tweet
-            @config.since_id = tweet.id
+            @config.since_id = tweet.id if tweet.id > @config.since_id
           end
           sleep @config.wait_time
         end
@@ -56,11 +56,10 @@ module Mihatter
         count: 100,
         lang: @config.lang,
         max_id: max_id,
-        since_id: @config.since_id,
-      }.delete_if {|_, v| v.nil?} ).take(100).sort do |a, b|
+      }.delete_if {|_, v| v.nil?} ).take(100).sort { |a, b|
         a.id <=> b.id
-      end
-      results = search(max_id: results.first.id - 1) + results if results.size == 100
+      }.select { |t| t.id > @config.since_id.to_i }
+      results = search(max_id: results.first.id) + results if results.size == 100
       results
     end
   end
